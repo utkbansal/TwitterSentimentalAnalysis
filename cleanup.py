@@ -1,6 +1,8 @@
 import csv
 import string
 
+import HTMLParser
+
 from nltk.corpus import stopwords
 
 tweets = []
@@ -13,6 +15,11 @@ with open('dataset.csv', 'rb') as data_file:
 
 def to_lowercase(text):
     return text.lower()
+
+
+def unescape_html(text):
+    html_parser = HTMLParser.HTMLParser()
+    return html_parser.unescape(text)
 
 
 def break_into_words(tweet):
@@ -92,17 +99,43 @@ def remove_whitespace(words):
         words[count] = word
     return words
 
+
+def remove_numbers(words):
+    """
+    remove any numbers remaining
+    :param words:
+    :return:
+    """
+    digits = []
+    for word in words:
+        if word.isdigit():
+            digits.append(word)
+
+    return [x for x in words if x not in digits]
+
+
 def remake_tweet(words):
     return ' '.join(words)
+
+
+def to_ascii(text):
+    """
+    downgrade text from utf-8 to ascii
+    :param text:
+    :return:
+    """
+    return text.decode('utf8').encode('ascii', 'ignore')
 
 
 if __name__ == '__main__':
     s = "downloading apps for my iphone! So much fun :-) There literally is an app for just about anything."
 
-    for s in tweets:
+    for text in tweets:
 
-        s = to_lowercase(s)
-        words = break_into_words(s)
+        text = to_lowercase(text)
+        text = to_ascii(text)
+        text = unescape_html(text)
+        words = break_into_words(text)
         words = remove_urls(words)
         words = remove_mentions(words)
         words = remove_punctuation(words)
@@ -113,6 +146,7 @@ if __name__ == '__main__':
 
         words = remove_stop_words(fresh_words)
         words = remove_whitespace(words)
+        words = remove_numbers(words)
 
         tweet = remake_tweet(words)
         print tweet
